@@ -1,90 +1,128 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash
+from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 from werkzeug.utils import secure_filename
 import os
-import sqlite3
+import mysql.connector
+from mysql.connector import Error
 
 app = Flask(__name__)
 app.secret_key = '123456'
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 
+def get_db_connection():
+    return mysql.connector.connect(
+        host='localhost',
+        user='root',
+        password='',  
+        database='buy_sell_db'
+    )
 
 def init_db():
-    with sqlite3.connect('database.db') as conn:
-        conn.execute('''CREATE TABLE IF NOT EXISTS users
-                        (id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        username TEXT NOT NULL,
-                        email TEXT NOT NULL,
-                        password TEXT NOT NULL)''')
-        conn.execute('''CREATE TABLE IF NOT EXISTS posts
-                        (id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        user_id INTEGER,
-                        image TEXT,
+    connection = get_db_connection()
+    cursor = connection.cursor()
+    cursor.execute('''CREATE TABLE IF NOT EXISTS users (
+                        id INT AUTO_INCREMENT PRIMARY KEY,
+                        username VARCHAR(255) NOT NULL,
+                        email VARCHAR(255) NOT NULL,
+                        password VARCHAR(255) NOT NULL,
+                        is_admin BOOLEAN DEFAULT 0
+                     )''')
+    cursor.execute('''CREATE TABLE IF NOT EXISTS posts (
+                        id INT AUTO_INCREMENT PRIMARY KEY,
+                        user_id INT,
+                        image VARCHAR(255),
                         description TEXT,
-                        price TEXT,
+                        price DECIMAL(10, 2),
                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                        FOREIGN KEY(user_id) REFERENCES users(id))''')
-        conn.execute('''CREATE TABLE IF NOT EXISTS comments
-                        (id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        post_id INTEGER,
-                        user_id INTEGER,
+                        FOREIGN KEY(user_id) REFERENCES users(id)
+                     )''')
+    cursor.execute('''CREATE TABLE IF NOT EXISTS comments (
+                        id INT AUTO_INCREMENT PRIMARY KEY,
+                        post_id INT,
+                        user_id INT,
                         comment_text TEXT,
                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                         FOREIGN KEY(post_id) REFERENCES posts(id),
-                        FOREIGN KEY(user_id) REFERENCES users(id))''')
+                        FOREIGN KEY(user_id) REFERENCES users(id)
+                     )''')
+    connection.commit()
+    cursor.close()
+    connection.close()
 
 init_db()
 
-# User registration
+
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
         username = request.form['username']
         email = request.form['email']
         password = request.form['password']
+        is_admin = 1 if username == 'admin' and password == 'admin' else 0
 
-        with sqlite3.connect('database.db') as conn:
-            cur = conn.cursor()
-            cur.execute("INSERT INTO users (username, email, password) VALUES (?, ?, ?)", (username, email, password))
-            conn.commit()
+        connection = get_db_connection()
+        cursor = connection.cursor()
+        cursor.execute("INSERT INTO users (username, email, password, is_admin) VALUES (%s, %s, %s, %s)", (username, email, password, is_admin))
+        connection.commit()
 
-        flash('Registration successful! Please log in.', 'success')
-        return redirect(url_for('login'))
+        cursor.execute("SELECT id FROM users WHERE email = %s", (email,))
+        user = cursor.fetchone()
+        cursor.close()
+        connection.close()
+
+        if user:
+            session['user_id'] = user[0]
+            session['username'] = username
+            session['is_admin'] = is_admin
+            flash('Registration successful! You are now logged in.', 'success')
+
+            if is_admin:
+                return redirect(url_for('admin'))
+            else:
+                return redirect(url_for('index'))
+
     return render_template('register.html')
 
-# User login
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         email = request.form['email']
         password = request.form['password']
 
-        with sqlite3.connect('database.db') as conn:
-            cur = conn.cursor()
-            cur.execute("SELECT * FROM users WHERE email = ? AND password = ?", (email, password))
-            user = cur.fetchone()
+        connection = get_db_connection()
+        cursor = connection.cursor()
+        cursor.execute("SELECT * FROM users WHERE email = %s AND password = %s", (email, password))
+        user = cursor.fetchone()
+        cursor.close()
+        connection.close()
 
         if user:
             session['user_id'] = user[0]
             session['username'] = user[1]
+            session['is_admin'] = user[4]
             flash('Login successful!', 'success')
-            return redirect(url_for('index'))
+
+            if user[4] == 1:
+                return redirect(url_for('admin'))
+            else:
+                return redirect(url_for('index'))
         else:
             flash('Invalid credentials, please try again.', 'danger')
     
     return render_template('login.html')
 
-# Home page
 @app.route('/')
 def index():
     if 'user_id' not in session:
         return redirect(url_for('login'))
     
-    with sqlite3.connect('database.db') as conn:
-        cur = conn.cursor()
-        cur.execute('''SELECT id, image, description, price 
+    connection = get_db_connection()
+    cursor = connection.cursor()
+    cursor.execute('''SELECT id, image, description, price 
                        FROM posts 
-                       WHERE user_id = ?''', (session['user_id'],))
-        user_posts = cur.fetchall()
+                       WHERE user_id = %s''', (session['user_id'],))
+    user_posts = cursor.fetchall()
+    cursor.close()
+    connection.close()
 
     return render_template('index.html', user_posts=user_posts)
 
@@ -93,37 +131,36 @@ def delete_post(post_id):
     if 'user_id' not in session:
         return redirect(url_for('login'))
 
-    with sqlite3.connect('database.db') as conn:
-        cur = conn.cursor()
-        cur.execute('DELETE FROM posts WHERE id = ? AND user_id = ?', (post_id, session['user_id']))
-        conn.commit()
+    connection = get_db_connection()
+    cursor = connection.cursor()
+    cursor.execute('DELETE FROM posts WHERE id = %s AND user_id = %s', (post_id, session['user_id']))
+    connection.commit()
+    cursor.close()
+    connection.close()
 
     flash('Post deleted successfully!', 'success')
     return redirect(url_for('index'))
 
-
-# Buy page - display posts
 @app.route('/buy')
 def buy():
-    with sqlite3.connect('database.db') as conn:
-        cur = conn.cursor()
-        # Get posts with user details
-        cur.execute('''SELECT posts.id, posts.image, posts.description, posts.price, users.username
+    connection = get_db_connection()
+    cursor = connection.cursor()
+    cursor.execute('''SELECT posts.id, posts.image, posts.description, posts.price, users.username
                        FROM posts JOIN users ON posts.user_id = users.id''')
-        posts = cur.fetchall()
+    posts = cursor.fetchall()
 
-        # Get comments for each post
-        comments = {}
-        for post in posts:
-            cur.execute('''SELECT comments.comment_text, users.username 
+    comments = {}
+    for post in posts:
+        cursor.execute('''SELECT comments.comment_text, users.username 
                            FROM comments JOIN users ON comments.user_id = users.id 
-                           WHERE comments.post_id = ?''', (post[0],))
-            comments[post[0]] = cur.fetchall()
+                           WHERE comments.post_id = %s''', (post[0],))
+        comments[post[0]] = cursor.fetchall()
+    
+    cursor.close()
+    connection.close()
 
     return render_template('buy.html', posts=posts, comments=comments)
 
-
-# Sell page - create post
 @app.route('/sell', methods=['GET', 'POST'])
 def sell():
     if request.method == 'POST':
@@ -133,31 +170,74 @@ def sell():
         filename = secure_filename(file.filename)
         file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
 
-        with sqlite3.connect('database.db') as conn:
-            cur = conn.cursor()
-            cur.execute("INSERT INTO posts (user_id, image, description, price) VALUES (?, ?, ?, ?)",
+        connection = get_db_connection()
+        cursor = connection.cursor()
+        cursor.execute("INSERT INTO posts (user_id, image, description, price) VALUES (%s, %s, %s, %s)",
                         (session['user_id'], filename, description, price))
-            conn.commit()
+        connection.commit()
+        cursor.close()
+        connection.close()
 
         flash('Post created successfully!', 'success')
         return redirect(url_for('buy'))
     
     return render_template('sell.html')
 
-# Comment on a post
 @app.route('/comment/<int:post_id>', methods=['POST'])
 def comment(post_id):
     comment_text = request.form['comment']
+    user_id = session['user_id']
 
-    with sqlite3.connect('database.db') as conn:
-        cur = conn.cursor()
-        cur.execute("INSERT INTO comments (post_id, user_id, comment_text) VALUES (?, ?, ?)",
-                    (post_id, session['user_id'], comment_text))
-        conn.commit()
+    connection = get_db_connection()
+    cursor = connection.cursor()
+    cursor.execute("INSERT INTO comments (post_id, user_id, comment_text) VALUES (%s, %s, %s)",
+                    (post_id, user_id, comment_text))
+    connection.commit()
+    cursor.execute('''SELECT comment_text, users.username 
+                       FROM comments JOIN users ON comments.user_id = users.id 
+                       WHERE comments.post_id = %s AND comments.user_id = %s 
+                       ORDER BY comments.id DESC LIMIT 1''', (post_id, user_id))
+    new_comment = cursor.fetchone()
+    cursor.close()
+    connection.close()
 
-    return redirect(url_for('buy'))
+    return jsonify({
+        'comment_text': new_comment[0],
+        'username': new_comment[1]
+    })
 
-# User logout
+@app.route('/admin')
+def admin():
+    if 'user_id' not in session or not session.get('is_admin'):
+        flash('Access denied. Admins only.', 'danger')
+        return redirect(url_for('index'))
+
+    connection = get_db_connection()
+    cursor = connection.cursor()
+    cursor.execute('''SELECT posts.id, posts.image, posts.description, posts.price, users.username
+                       FROM posts JOIN users ON posts.user_id = users.id''')
+    posts = cursor.fetchall()
+    cursor.close()
+    connection.close()
+
+    return render_template('admin.html', posts=posts)
+
+@app.route('/admin/delete/<int:post_id>', methods=['POST'])
+def admin_delete_post(post_id):
+    if 'user_id' not in session or not session.get('is_admin'):
+        flash('Access denied. Admins only.', 'danger')
+        return redirect(url_for('index'))
+
+    connection = get_db_connection()
+    cursor = connection.cursor()
+    cursor.execute('DELETE FROM posts WHERE id = %s', (post_id,))
+    connection.commit()
+    cursor.close()
+    connection.close()
+
+    flash('Post deleted successfully!', 'success')
+    return redirect(url_for('admin'))
+
 @app.route('/logout')
 def logout():
     session.clear()

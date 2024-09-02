@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Buy</title>
-    <!-- Bootstrap CSS -->
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body {
@@ -78,34 +77,13 @@
         .comment-form button:hover {
             background-color: #0056b3;
         }
-        .post-actions {
-            margin-top: 10px;
-        }
-        .post-actions a {
-            margin-right: 10px;
-            color: #007bff;
-            text-decoration: none;
-        }
-        .post-actions a:hover {
-            text-decoration: underline;
-        }
-        .post-actions form {
-            display: inline;
-        }
-        .post-actions button {
-            background: none;
-            border: none;
-            color: #dc3545;
-            cursor: pointer;
-        }
-        .post-actions button:hover {
-            text-decoration: underline;
-        }
+        .container, .container-lg, .container-md, .container-sm {
+        max-width: 371px;
+    }
     </style>
 </head>
 <body>
 
-    <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
         <a class="navbar-brand" href="/">DIU Buy & Sell</a>
         <div class="collapse navbar-collapse">
@@ -123,12 +101,12 @@
         </div>
     </nav>
 
-    <!-- Posts Section -->
+
     <div class="container">
         <div class="row">
             <div class="col-md-12">
                 {% for post in posts %}
-                    <div class="post-card">
+                    <div class="post-card" id="post-{{ post[0] }}">
                         <div class="post-content">
                             <h5>Description:</h5>
                             <p>{{ post[2] }}</p>
@@ -138,8 +116,8 @@
                         </div>
                         <img src="{{ url_for('static', filename='uploads/' + post[1]) }}" alt="Product Image" class="post-image">
                         
-                        <!-- Comments Section -->
-                        <div class="comment-section">
+
+                        <div class="comment-section" id="comments-{{ post[0] }}">
                             <h4>Comments:</h4>
                             {% if comments[post[0]] %}
                                 {% for comment in comments[post[0]] %}
@@ -152,31 +130,44 @@
                             {% endif %}
                         </div>
 
-                        <!-- Comment Form -->
-                        <form class="comment-form" action="/comment/{{ post[0] }}" method="post">
+             
+                        <form class="comment-form" action="#" method="post" onsubmit="return submitComment({{ post[0] }})">
                             <input type="text" name="comment" class="form-control" placeholder="Write a comment" required>
                             <button type="submit" class="btn btn-primary">Comment</button>
                         </form>
-
-                        <!-- Post Actions (Edit/Delete) -->
-                        {% if post[5] == session.user_id %}
-                            <div class="post-actions">
-                                <a href="/edit/{{ post[0] }}">Edit</a>
-                                <form action="/delete/{{ post[0] }}" method="post" onsubmit="return confirm('Are you sure you want to delete this post?');">
-                                    <button type="submit">Delete</button>
-                                </form>
-                            </div>
-                        {% endif %}
                     </div>
                 {% endfor %}
             </div>
         </div>
     </div>
 
-    <!-- Bootstrap JS and dependencies -->
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    
+
+    <script>
+        function submitComment(postId) {
+            var form = event.target;
+            var formData = new FormData(form);
+            formData.append('post_id', postId);
+
+            fetch('/comment/' + postId, {
+                method: 'POST',
+                body: formData
+            }).then(response => response.json())
+              .then(data => {
+         
+                  var commentsSection = document.getElementById('comments-' + postId);
+                  var newComment = document.createElement('div');
+                  newComment.classList.add('comment');
+                  newComment.innerHTML = '<p><strong>' + data.username + ':</strong> ' + data.comment_text + '</p>';
+                  commentsSection.appendChild(newComment);
+                  form.reset();
+              }).catch(error => console.error('Error:', error));
+            return false;
+        }
+    </script>
 
 </body>
 </html>
