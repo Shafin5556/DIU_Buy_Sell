@@ -78,7 +78,7 @@
             background-color: #0056b3;
         }
         .container, .container-lg, .container-md, .container-sm {
-        max-width: 371px;
+        max-width: 540px;
     }
     </style>
 </head>
@@ -111,7 +111,7 @@
                             <h5>Description:</h5>
                             <p>{{ post[2] }}</p>
                             <h5>Price:</h5>
-                            <p>${{ post[3] }}</p>
+                            <p>৳{{ post[3] }}</p>
                             <p class="text-muted">Posted by: <strong>{{ post[4] }}</strong></p>
                         </div>
                         <img src="{{ url_for('static', filename='uploads/' + post[1]) }}" alt="Product Image" class="post-image">
@@ -157,7 +157,6 @@
                 body: formData
             }).then(response => response.json())
               .then(data => {
-         
                   var commentsSection = document.getElementById('comments-' + postId);
                   var newComment = document.createElement('div');
                   newComment.classList.add('comment');
