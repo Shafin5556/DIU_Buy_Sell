@@ -1,0 +1,87 @@
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+<script src="{{ url_for('static', filename='js/script.js') }}"></script>
+<button class="toggle-btn">&#9776;</button>
+<div class="sidebar">
+    <ul>
+        <li>
+            <a href="{{ url_for('index') }}" class="{{ 'active' if request.endpoint == 'index' else '' }}">
+                <i class="fas fa-home"></i> Home
+            </a>
+        </li>
+        <li>
+            <a href="{{ url_for('buy') }}" class="{{ 'active' if request.endpoint == 'buy' else '' }}">
+                <i class="fas fa-shopping-cart"></i> Buy
+            </a>
+        </li>
+        <li>
+            <a href="{{ url_for('sell') }}" class="{{ 'active' if request.endpoint == 'sell' else '' }}">
+                <i class="fas fa-dollar-sign"></i> Sell
+            </a>
+        </li>
+
+        <li>
+            <a href="{{ url_for('profile') }}" class="{{ 'active' if request.endpoint == 'profile' else '' }}">
+                <i class="fas fa-user"></i> Profile
+            </a>
+        </li>
+        <li>
+            <a href="{{ url_for('logout') }}" class="{{ 'active' if request.endpoint == 'logout' else '' }}">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </a>
+        </li>
+    </ul>
+</div>
+
+<div class="modal fade" id="logoutModal" tabindex="-1" role="dialog" aria-labelledby="logoutModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="logoutModalLabel">Confirm Logout</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Do you want to log out?</p>
+            </div>
+            <div class="modal-footer">
+                <!-- <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button> -->
+                <a href="{{ url_for('logout') }}" id="logout-confirm" class="btn btn-primary">Yes</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<script>
+    const sidebarElement = document.querySelector('.sidebar');
+    const toggleBtn = document.querySelector('.toggle-btn');
+    const bodyElement = document.body;
+
+    toggleBtn.addEventListener('click', (event) => {
+        sidebarElement.classList.toggle('open');
+        event.stopPropagation();
+    });
+
+    bodyElement.addEventListener('click', (event) => {
+        if (!sidebarElement.contains(event.target) && !toggleBtn.contains(event.target)) {
+            sidebarElement.classList.remove('open');
+        }
+    });
+
+    sidebarElement.addEventListener('click', (event) => {
+        event.stopPropagation();
+    });
+
+
+    const logoutBtn = document.querySelector('a[href="{{ url_for('logout') }}"]');
+
+    logoutBtn.addEventListener('click', function (event) {
+        event.preventDefault();
+
+    
+        $('#logoutModal').modal('show');
+    });
+</script>

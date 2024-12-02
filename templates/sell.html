@@ -3,108 +3,51 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sell</title>
+    <title>Sell Your Product</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
     <style>
-        body {
-            background-color: #f0f2f5;
-            font-family: 'Arial', sans-serif;
-        }
-        .navbar {
-            margin-bottom: 30px;
-            box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.1);
-        }
-        .sell-form-container {
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 30px;
-            background-color: #ffffff;
-            box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.1);
-            border-radius: 10px;
-        }
-        .sell-form-container h2 {
-            margin-bottom: 30px;
-            font-size: 28px;
-            text-align: center;
-            font-weight: bold;
-            color: #333;
-        }
-        .form-group label {
-            font-weight: bold;
-            color: #555;
-        }
-        .form-control {
-            border-radius: 5px;
-            padding: 10px;
-            margin-bottom: 15px;
-        }
-        .form-control-file {
-            border-radius: 5px;
-            margin-bottom: 15px;
-        }
-        .btn-primary {
-            width: 100%;
-            padding: 12px;
-            border-radius: 5px;
-            background-color: #007bff;
-            border: none;
-            font-size: 16px;
-            font-weight: bold;
-        }
-        .btn-primary:hover {
-            background-color: #0056b3;
-        }
-        .form-group textarea {
-            resize: vertical;
-            min-height: 100px;
-        }
+
     </style>
 </head>
 <body>
-
-
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
-        <a class="navbar-brand" href="/">DIU Buy & Sell</a>
-        <div class="collapse navbar-collapse">
-            <ul class="navbar-nav ml-auto">
-                <li class="nav-item">
-                    <a class="nav-link" href="/">Home</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="/buy">Buy</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="/logout">Logout</a>
-                </li>
-            </ul>
-        </div>
-    </nav>
-
-
+    {% include 'sidebar.html' %}
     <div class="container">
         <div class="sell-form-container">
-            <h2>Sell Your Product</h2>
             <form action="/sell" method="post" enctype="multipart/form-data">
                 <div class="form-group">
                     <label for="image">Upload Product Image</label>
-                    <input type="file" class="form-control-file" id="image" name="image" required>
+                    <input type="file" class="form-control-file" id="image" name="image" accept="image/*" onchange="previewImage(event)" required>
                 </div>
+                
+ 
+                <div class="image-preview-container" id="imagePreviewContainer" style="display: none;">
+                    <p><strong>Image Preview:</strong></p>
+                    <img id="imagePreview" src="" alt="Image Preview">
+                </div>
+                
                 <div class="form-group">
                     <label for="description">Product Description</label>
-                    <textarea class="form-control" id="description" name="description" placeholder="Enter product description" required></textarea>
+                    <textarea class="form-control" id="description" name="description" placeholder="Enter product description" rows="4" required></textarea>
                 </div>
+                
                 <div class="form-group">
                     <label for="price">Price</label>
                     <input type="text" class="form-control" id="price" name="price" placeholder="Enter product price" required>
                 </div>
-                <button type="submit" class="btn btn-primary">Post</button>
+                
+                <button type="submit" class="btn btn-custom btn-block">Post</button>
             </form>
         </div>
     </div>
-
+    
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    
+    <script>
 
+    </script>
 </body>
 </html>

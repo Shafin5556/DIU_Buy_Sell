@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Profile</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    <style>
+
+
+        .form-group input[type="file"] {
+    display: none;
+}
+
+.form-group .upload-btn-container {
+    cursor: pointer;
+}
+
+    </style>
+</head>
+
+<body>
+
+    {% include 'sidebar.html' %}
+
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-10 col-md-12">
+                <div class="post-card">
+
+
+                    <form method="POST" enctype="multipart/form-data">
+                        <div class="form-group">
+                            <label for="username">Username</label>
+                            <input type="text" class="form-control" id="username" name="username" value="{{ user[0] }}"
+                                required>
+                        </div>
+                        <div class="form-group">
+                            <label for="email">Email</label>
+                            <input type="email" class="form-control" id="email" name="email" value="{{ user[1] }}"
+                                required>
+                        </div>
+                        <div class="form-group">
+                            <label for="password">Password (Leave empty if you don't want to change it)</label>
+                            <input type="password" class="form-control" id="password" name="password">
+                        </div>
+                        <div class="form-group">
+                            <label for="profile_pic">Profile Picture</label>
+                            <div class="profile-img-container">
+                                <input type="file" class="form-control" id="profile_pic" name="profile_pic" onchange="previewImage(event)">
+                                {% if user[2] %}
+                                    <img id="imagePreview" src="{{ url_for('static', filename='uploads/' + user[2]) }}" alt="Profile Pic">
+                                {% else %}
+                                    <p>No profile picture uploaded</p>
+                                {% endif %}
+                                <div class="upload-btn-container">
+                                    <label for="profile_pic" class="upload-btn">Upload New Picture</label>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Update Profile</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+
+
+</body>
+
+</html>

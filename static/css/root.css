@@ -1,0 +1,59 @@
+
+
+body {
+    font-family: 'Roboto', sans-serif;
+    background-color: #f8f9fa;
+}
+
+.post-container {
+display: grid;
+grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+gap: 20px;
+margin-top: 30px;
+}
+
+.post-card {
+background-color: white;
+border-radius: 8px;
+box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+overflow: hidden;
+transition: transform 0.3s ease-in-out;
+}
+
+.post-card:hover {
+transform: translateY(-5px);
+}
+
+.post-image {
+width: 100%;
+height: 200px;
+object-fit: cover;
+}
+
+.post-content {
+padding: 20px;
+}
+
+.post-actions {
+padding: 15px;
+display: flex;
+justify-content: space-between;
+align-items: center;
+background-color: #f8f9fa;
+border-top: 1px solid #e0e0e0;
+}
+
+.post-actions .btn {
+width: 100px;
+border-radius: 20px;
+}
+
+.post-actions .btn-warning {
+background-color: #f0ad4e;
+color: white;
+}
+
+.post-actions .btn-danger {
+background-color: #d9534f;
+color: white;
+}
