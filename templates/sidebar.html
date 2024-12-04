@@ -21,6 +21,14 @@
         </li>
 
         <li>
+            <a href="{{ url_for('view_srs_files') }}"
+                class="{{ 'active' if request.endpoint == 'view_srs_files' else '' }}">
+                <i class="fas fa-file-pdf"></i> SRS Files
+            </a>
+
+        </li>
+
+        <li>
             <a href="{{ url_for('profile') }}" class="{{ 'active' if request.endpoint == 'profile' else '' }}">
                 <i class="fas fa-user"></i> Profile
             </a>
@@ -33,7 +41,8 @@
     </ul>
 </div>
 
-<div class="modal fade" id="logoutModal" tabindex="-1" role="dialog" aria-labelledby="logoutModalLabel" aria-hidden="true">
+<div class="modal fade" id="logoutModal" tabindex="-1" role="dialog" aria-labelledby="logoutModalLabel"
+    aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
@@ -52,6 +61,11 @@
         </div>
     </div>
 </div>
+
+<div class="loading-screen" id="loadingScreen">
+    <div class="spinner"></div>
+</div>
+
 
 
 
@@ -81,7 +95,36 @@
     logoutBtn.addEventListener('click', function (event) {
         event.preventDefault();
 
-    
+
         $('#logoutModal').modal('show');
+    });
+
+    const loadingScreen = document.getElementById('loadingScreen');
+
+
+    function showLoadingScreen() {
+        loadingScreen.style.display = 'flex';
+    }
+
+
+    function hideLoadingScreen() {
+        loadingScreen.style.display = 'none';
+    }
+
+
+    window.addEventListener('beforeunload', function () {
+        showLoadingScreen();
+    });
+
+
+    const forms = document.querySelectorAll('form');
+    forms.forEach((form) => {
+        form.addEventListener('submit', function (event) {
+            showLoadingScreen();
+        });
+    });
+
+    document.addEventListener('DOMContentLoaded', function () {
+        hideLoadingScreen();
     });
 </script>
